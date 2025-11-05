@@ -9,4 +9,5 @@ import java.util.Map;
 public interface SettleUpStrategy {
 
     public List<Transaction> settleUp(Map<User, Double> aggregateExpenses);
+
 }

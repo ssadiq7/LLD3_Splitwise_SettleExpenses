@@ -6,6 +6,7 @@ import com.example.splitwise.models.Expense;
 import com.example.splitwise.models.GroupExpense;
 import com.example.splitwise.models.Transaction;
 import com.example.splitwise.models.User;
+import com.example.splitwise.repositories.ExpenseRepository;
 import com.example.splitwise.repositories.GroupExpenseRepository;
 import com.example.splitwise.repositories.GroupRepository;
 import com.example.splitwise.repositories.UserRepository;
@@ -24,13 +25,15 @@ public class SettleUpServiceImpl implements SettleUpService {
     private final GroupRepository groupRepository;
     private final GroupExpenseRepository groupExpenseRepository;
     private final SettleUpStrategy settleUpStrategy;
+    private final ExpenseRepository expenseRepository;
 
     @Autowired
-    public SettleUpServiceImpl(UserRepository userRepository, GroupRepository groupRepository, GroupExpenseRepository groupExpenseRepository, SettleUpStrategy settleUpStrategy) {
+    public SettleUpServiceImpl(UserRepository userRepository, GroupRepository groupRepository, GroupExpenseRepository groupExpenseRepository, SettleUpStrategy settleUpStrategy, ExpenseRepository expenseRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.groupExpenseRepository = groupExpenseRepository;
         this.settleUpStrategy = settleUpStrategy;
+        this.expenseRepository = expenseRepository;
     }
 
     @Override
@@ -50,7 +53,12 @@ public class SettleUpServiceImpl implements SettleUpService {
 
     @Override
     public List<Transaction> settleUser(long userId) throws InvalidUserException {
-        return List.of();
+
+        userRepository.findById(userId).orElseThrow(() -> new InvalidUserException("User not found"));
+        List<Expense> expenses = expenseRepository.findNonGroupExpensesForUser(userId);
+        Map<User, Double> aggregateExpenses = ExpenseUtils.aggregateExpenses(expenses);
+        return settleUpStrategy.settleUp(aggregateExpenses);
+
     }
 
 }

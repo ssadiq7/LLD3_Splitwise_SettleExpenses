@@ -27,7 +27,7 @@ public class ExpenseUtils {
                 else {
                     amountForThisExpense =  expenseUser.getAmount() * -1; // The users who owe for this expense will be marked negative
                 }
-                aggregatedExpenses.put(user, aggregatedExpenses.getOrDefault(user, 0d) + amountForThisExpense);
+                aggregatedExpenses.put(user, aggregatedExpenses.getOrDefault(user, 0d) + amountForThisExpense); // This map will have net amount for each user, positive for those who paid more, negative for those who owe more
             }
 
         }

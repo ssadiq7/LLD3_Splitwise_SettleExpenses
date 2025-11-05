@@ -3,9 +3,11 @@ package com.example.splitwise.strategies;
 import com.example.splitwise.models.Transaction;
 import com.example.splitwise.models.User;
 import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+@Component
 public class TwoSetsSettleUpStrategy implements SettleUpStrategy {
 
     @Override
@@ -38,20 +40,32 @@ public class TwoSetsSettleUpStrategy implements SettleUpStrategy {
         // Now poll the numbers from minHeap and maxHeap and create transactions accordingly
         List<Transaction> transactions = new ArrayList<>();
         while(!minHeap.isEmpty() && !maxHeap.isEmpty()) {
+
             Pair<User, Double> userToPay = minHeap.poll();
             Pair<User, Double> userToGet = maxHeap.poll();
 
+            double amountToSettle = Math.min(Math.abs(userToPay.getSecond()), userToGet.getSecond());
 
+            Transaction transaction = new Transaction();
+            transaction.setAmount(amountToSettle);
+            transaction.setPaidFrom(userToPay.getFirst());
+            transaction.setPaidTo(userToGet.getFirst());
 
+            transactions.add(transaction); // List of suggested transactions to settle up
+
+            double newAmountToPay = userToPay.getSecond() + amountToSettle; // Nett off the amount paid by the giver
+            double newAmountToGet = userToGet.getSecond() - amountToSettle; // Nett off the amount received by the taker
+            if(newAmountToPay < 0) {
+                minHeap.add(Pair.of(userToPay.getFirst(), newAmountToPay)); // Add back to minHeap if still owes money
+            }
+            if(newAmountToGet > 0) {
+                maxHeap.add(Pair.of(userToGet.getFirst(), newAmountToGet)); // Add back to maxHeap if still needs to receive money
+            }
 
         }
 
+        return transactions;
 
-
-
-
-
-        return List.of();
     }
 
 }
